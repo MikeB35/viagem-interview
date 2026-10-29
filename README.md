@@ -81,5 +81,5 @@ Aplikace je navržena pro běh v lokálním prostředí (např. XAMPP) a modern�
   CREATE SPATIAL INDEX sp_idx_polygon ON parcel_geometries(polygon);
   ```
   4. Soubor s daty data.gml z ČÚZK je uložen v složce src
-  5. Z příkazové řádky spusťte importní skript: php import.php nebo v prohlizeci http://localhost/map_app/api/importer.php
-  6. Otevřete v prohlížeči: http://localhost/map_app/
+  5. Z příkazové řádky spusťte importní skript: php import.php nebo v prohlizeci https://localhost/viagem-interview/www/api/importer.php
+  6. Otevřete v prohlížeči: https://localhost/viagem-interview/www/
