@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parcel Map - Viagem a.s.</title>
+
+    <!-- Mapbox GL JS -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+
+        /* Popup styling */
+        .mapboxgl-popup-content {
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        .mapboxgl-popup-content h3 { margin: 0 0 10px 0; color: #2c3e50; font-size: 18px; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
+        .mapboxgl-popup-content p { margin: 5px 0; color: #34495e; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<script>
+    // Mapbox configuration
+    mapboxgl.accessToken = 'INSERT_MAPBOX_API_KEY';
+
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/satellite-streets-v12', // Satellite map is best for parcels
+        center: [15.3516, 50.4377], // Coordinates: Jičín
+        zoom: 13
+    });
+
+    map.on('load', () => {
+        // Add an empty data source (GeoJSON) that we will fill from our API
+        map.addSource('parcels-source', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] }
+        });
+
+        // Render polygons (fill)
+        map.addLayer({
+            id: 'parcels-fill',
+            type: 'fill',
+            source: 'parcels-source',
+            paint: {
+                'fill-color': '#3498db',
+                'fill-opacity': 0.4
+            }
+        });
+
+        // Render parcel outlines
+        map.addLayer({
+            id: 'parcels-outline',
+            type: 'line',
+            source: 'parcels-source',
+            paint: {
+                'line-color': '#2980b9',
+                'line-width': 1
+            }
+        });
+
+        /**
+         * Function to load parcels in the current screen viewport
+         */
+        function fetchVisibleParcels() {
+            const bounds = map.getBounds();
+            // Format for backend: minLon, minLat, maxLon, maxLat
+            const bbox = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
+
+            fetch(`api/controller.php?action=getParcelsInBounds&bbox=${bbox}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Protection against errors if zoomed out too far
+                    if (data.type === 'FeatureCollection') {
+                        map.getSource('parcels-source').setData(data);
+                    }
+                })
+                .catch(error => console.error('Error fetching parcels:', error));
+        }
+
+        // Load data immediately on startup and then on every map movement
+        fetchVisibleParcels();
+        map.on('moveend', fetchVisibleParcels);
+
+        // Handle click on a parcel
+        map.on('click', 'parcels-fill', (e) => {
+            if (!e.features || e.features.length === 0) return;
+
+            const parcelId = e.features[0].properties.id;
+
+            // Query backend for detailed information
+            fetch(`api/controller.php?action=getParcelDetails&id=${parcelId}`)
+                .then(response => response.json())
+                .then(details => {
+                    if (details.error) return;
+
+                    // Display details in a popup window
+                    new mapboxgl.Popup()
+                        .setLngLat(e.lngLat)
+                        .setHTML(`
+                            <h3>Parcel No. ${details.label}</h3>
+                            <p><strong>Area:</strong> ${details.area_m2} m²</p>
+                            <p><strong>Municipality:</strong> ${details.municipality_name}</p>
+                            <p><strong>Reference code:</strong> ${details.national_reference}</p>
+                        `)
+                        .addTo(map);
+                })
+                .catch(error => console.error('Error fetching parcel details:', error));
+        });
+
+        // Change cursor when hovering over a parcel
+        map.on('mouseenter', 'parcels-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
+        map.on('mouseleave', 'parcels-fill', () => { map.getCanvas().style.cursor = ''; });
+    });
+</script>
+
+</body>
+</html>
