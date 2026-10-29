@@ -18,11 +18,11 @@ Navrhl jsem striktní oddělení dat s vazbou 1:1:
 
 > Důvod: Rozdělení tabulek zajišťuje čistotu kódu, zrychluje běžné dotazy a snižuje paměťovou zátěž databázového serveru.
 
-![Alt text](C:\xampp\htdocs\viagem-interview\documetation\diagrams\viagem\AplicationDataModel\ADM.png)
+![Aplication Data Model](documetation/diagrams/viagem/AplicationDataModel/ADM.png)
 
 Také před tím než cokoliv psát jsem navrhnul architekuru aplikace v UML Component Diagramu
 
-![Alt text](C:\xampp\htdocs\viagem-interview\documetation\diagrams\viagem\ComponentDiagram\components.png)
+![Component Diagram](documetation/diagrams/viagem/ComponentDiagram/components.png)
 
 3. Výkon: Jak jsem vyřešil plynulost nad celým okresem
 
